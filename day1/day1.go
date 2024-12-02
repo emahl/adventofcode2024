@@ -1,20 +1,37 @@
-package main
+package day1
 
 import (
-	"bufio"
 	"fmt"
 	"math"
-	"os"
 	"sort"
-	"strconv"
 	"strings"
+
+	"github.com/emahl/adventofcode2024/shared"
 )
 
-func main() {
+func Run() {
 	leftList, rightList := readListsFromFile()
 
 	part1(leftList, rightList)
 	part2(leftList, rightList)
+}
+
+func readListsFromFile() ([]int, []int) {
+	file, scanner := shared.ReadFile("day1/input.txt")
+	defer file.Close()
+
+	var leftList []int
+	var rightList []int
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		split := strings.Split(line, "   ")
+
+		leftList = append(leftList, shared.ConvertToNumber(split[0]))
+		rightList = append(rightList, shared.ConvertToNumber(split[1]))
+	}
+
+	return leftList, rightList
 }
 
 func part1(leftList []int, rightList []int) {
@@ -34,33 +51,6 @@ func part2(leftList []int, rightList []int) {
 	}
 
 	fmt.Println("Similarity score:", score)
-}
-
-func convertToNumber(numberStr string) int {
-	convertedNumber, err := strconv.Atoi(numberStr)
-	check(err)
-
-	return convertedNumber
-}
-
-func readListsFromFile() ([]int, []int) {
-	file, err := os.Open("inputs/day1.txt")
-	check(err)
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-
-	var leftList []int
-	var rightList []int
-
-	for scanner.Scan() {
-		line := scanner.Text()
-		split := strings.Split(line, "   ")
-		leftList = append(leftList, convertToNumber(split[0]))
-		rightList = append(rightList, convertToNumber(split[1]))
-	}
-
-	return leftList, rightList
 }
 
 func calculateDistances(list1 []int, list2 []int) []int {
@@ -89,10 +79,4 @@ func countNumberOfOccurences(number int, array []int) int {
 		}
 	}
 	return sum
-}
-
-func check(e error) {
-	if e != nil {
-		panic(e)
-	}
 }
