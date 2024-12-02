@@ -11,10 +11,13 @@ import (
 )
 
 func main() {
-	chosenDay := gatherUserInput()
-	if chosenDay < 1 || chosenDay > 25 {
-		fmt.Println("Invalid day! Retry...")
-		return
+	chosenDay := 0
+
+	for chosenDay < 1 || chosenDay > 25 {
+		chosenDay = gatherUserInput()
+		if chosenDay < 1 || chosenDay > 25 {
+			fmt.Println("Invalid day! Enter a number between 1 and 25")
+		}
 	}
 
 	switch chosenDay {
