@@ -8,6 +8,7 @@ import (
 	"github.com/emahl/adventofcode2024/day1"
 	"github.com/emahl/adventofcode2024/day2"
 	"github.com/emahl/adventofcode2024/day3"
+	"github.com/emahl/adventofcode2024/day4"
 	"github.com/emahl/adventofcode2024/shared"
 )
 
@@ -28,6 +29,8 @@ func main() {
 		day2.Run()
 	case 3:
 		day3.Run()
+	case 4:
+		day4.Run()
 	default:
 		fmt.Println("Not implemented yet...")
 	}
