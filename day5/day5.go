@@ -2,6 +2,7 @@ package day5
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/emahl/adventofcode2024/shared"
@@ -14,18 +15,20 @@ type Rule struct {
 
 func Run() {
 	rules, pageNumberUpdates := readRulesAndPageNumbersFromFile()
+
 	part1(rules, pageNumberUpdates)
+	part2(rules, pageNumberUpdates)
 }
 
 func part1(rules []Rule, pageNumberUpdates [][]int) {
-	correctlyOrderedUpdates := getCorrectlyOrderedUpdates(pageNumberUpdates, rules)
-	middleNumbers := getMiddleNumbers(correctlyOrderedUpdates)
-	sum := 0
+	correctlyOrderedUpdates := getOrderedUpdates(pageNumberUpdates, rules, true)
+	fmt.Println("Sum of middle page numbers from correctly ordered updates:", sumOfMiddleNumbers(correctlyOrderedUpdates))
+}
 
-	for _, num := range middleNumbers {
-		sum += num
-	}
-	fmt.Println("Sum of middle page numbers from correctly ordered updates:", sum)
+func part2(rules []Rule, pageNumberUpdates [][]int) {
+	incorrectlyOrderedUpdates := getOrderedUpdates(pageNumberUpdates, rules, false)
+	correctlyOrderedUpdates := orderUpdates(incorrectlyOrderedUpdates, rules)
+	fmt.Println("Sum of middle page numbers from incorrectly ordered updates:", sumOfMiddleNumbers(correctlyOrderedUpdates))
 }
 
 func readRulesAndPageNumbersFromFile() ([]Rule, [][]int) {
@@ -59,14 +62,28 @@ func convertToNumbers(strs []string) []int {
 	return numbers
 }
 
-func getCorrectlyOrderedUpdates(pageNumberUpdates [][]int, rules []Rule) [][]int {
-	var correctlyOrdered [][]int
+func orderUpdates(incorrectlyOrderedUpdates [][]int, rules []Rule) [][]int {
+	for _, update := range incorrectlyOrderedUpdates {
+		sort.Slice(update, func(i, j int) bool {
+			for _, rule := range rules {
+				if rule.Before == update[i] && rule.After == update[j] {
+					return true
+				}
+			}
+			return false
+		})
+	}
+	return incorrectlyOrderedUpdates
+}
+
+func getOrderedUpdates(pageNumberUpdates [][]int, rules []Rule, filterValid bool) [][]int {
+	var orderedUpdates [][]int
 	for _, update := range pageNumberUpdates {
-		if isValidUpdate(update, rules) {
-			correctlyOrdered = append(correctlyOrdered, update)
+		if (filterValid && isValidUpdate(update, rules)) || (!filterValid && !isValidUpdate(update, rules)) {
+			orderedUpdates = append(orderedUpdates, update)
 		}
 	}
-	return correctlyOrdered
+	return orderedUpdates
 }
 
 func isValidUpdate(update []int, rules []Rule) bool {
@@ -91,10 +108,11 @@ func isValidRule(pageNumber int, numbersAfter []int, rules []Rule) bool {
 	return true
 }
 
-func getMiddleNumbers(correctlyOrderedUpdates [][]int) []int {
-	var middleNumbers []int
-	for _, update := range correctlyOrderedUpdates {
-		middleNumbers = append(middleNumbers, update[(len(update)-1)/2])
+func sumOfMiddleNumbers(pageNumberUpdates [][]int) int {
+	sum := 0
+	for _, update := range pageNumberUpdates {
+		middleIndex := (len(update) - 1) / 2
+		sum += update[middleIndex]
 	}
-	return middleNumbers
+	return sum
 }
