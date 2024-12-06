@@ -26,38 +26,100 @@ type GuardPosition struct {
 func Run() {
 	mappedArea, guardStartingPosition := readMapFromFile()
 
-	var visitedPositions []GuardPosition
-	visitedPositions = append(visitedPositions, guardStartingPosition)
+	part1(mappedArea, guardStartingPosition)
+	part2(mappedArea, guardStartingPosition)
+}
+
+func readMapFromFile() ([][]rune, GuardPosition) {
+	file, scanner := shared.ReadFile("day6/input.txt")
+	defer file.Close()
+
+	var mappedArea [][]rune
+	var guardPosition GuardPosition
+	y := 0
+	for scanner.Scan() {
+		line := scanner.Text()
+		runes := []rune(line)
+		mappedArea = append(mappedArea, runes)
+		for x, r := range runes {
+			if r == '^' {
+				guardPosition = GuardPosition{Position: Position{X: x, Y: y}, Direction: Up}
+			}
+		}
+		y++
+	}
+
+	// Remove the guard position from the map
+	mappedArea[guardPosition.Y][guardPosition.X] = '.'
+
+	return mappedArea, guardPosition
+}
+
+func part1(mappedArea [][]rune, guardStartingPosition GuardPosition) {
+	visitedPositions := getVisitedPositions(mappedArea, guardStartingPosition)
+	sum := len(getUnique(visitedPositions))
+	fmt.Println("Number of distinct guard positions:", sum)
+}
+
+func part2(mappedArea [][]rune, guardStartingPosition GuardPosition) {
+	obstructionPositions := getObstructionsCreatingLoops(mappedArea, guardStartingPosition)
+	sum := len(obstructionPositions)
+	fmt.Println("Number of obstruction positions:", sum)
+}
+
+func getVisitedPositions(mappedArea [][]rune, guardStartingPosition GuardPosition) []GuardPosition {
+	visitedPositionsLookup := make(map[GuardPosition]bool)
+	currentPosition := guardStartingPosition
+
 	for {
-		newGuardPosition := moveGuard(mappedArea, visitedPositions[len(visitedPositions)-1])
+		newGuardPosition := moveGuard(mappedArea, currentPosition)
+
+		// Stop if the guard moves outside the mapped area
 		if newGuardPosition.X == -1 && newGuardPosition.Y == -1 {
 			break
 		}
-		visitedPositions = append(visitedPositions, newGuardPosition)
+
+		// If revisiting a position, return an empty slice
+		if visitedPositionsLookup[newGuardPosition] {
+			return []GuardPosition{}
+		}
+
+		visitedPositionsLookup[newGuardPosition] = true
+		currentPosition = newGuardPosition
 	}
 
-	uniquePositions := unique(visitedPositions)
-	sum := len(uniquePositions)
-	fmt.Println("The number of distinct guard positions:", sum)
+	result := make([]GuardPosition, 0, len(visitedPositionsLookup))
+	for p := range visitedPositionsLookup {
+		result = append(result, p)
+	}
+	return result
 }
 
-func unique(positions []GuardPosition) []GuardPosition {
-	var uniquePositions []GuardPosition
+func getObstructionsCreatingLoops(mappedArea [][]rune, guardStartingPosition GuardPosition) []Position {
+	var obstructionPositions []Position
 
-	for _, p := range positions {
-		isUnique := true
-		for _, u := range uniquePositions {
-			if p.X == u.X && p.Y == u.Y {
-				isUnique = false
-				break
+	for y := 0; y < len(mappedArea); y++ {
+		for x := 0; x < len(mappedArea[y]); x++ {
+			// Skip non-empty positions and the guard's starting position
+			if mappedArea[y][x] != '.' || (y == guardStartingPosition.Y && x == guardStartingPosition.X) {
+				continue
 			}
-		}
-		if isUnique {
-			uniquePositions = append(uniquePositions, p)
+
+			// Create a copy of the mapped area to test with the new obstruction
+			areaCopy := make([][]rune, len(mappedArea))
+			for i := range mappedArea {
+				areaCopy[i] = append([]rune{}, mappedArea[i]...)
+			}
+
+			// Add new obstruction
+			areaCopy[y][x] = '#'
+			if len(getVisitedPositions(areaCopy, guardStartingPosition)) == 0 {
+				obstructionPositions = append(obstructionPositions, Position{X: x, Y: y})
+			}
 		}
 	}
 
-	return uniquePositions
+	return obstructionPositions
 }
 
 func moveGuard(area [][]rune, currentGuardPosition GuardPosition) GuardPosition {
@@ -110,27 +172,26 @@ func getNextPosition(position GuardPosition) (int, int) {
 	return nextX, nextY
 }
 
-func readMapFromFile() ([][]rune, GuardPosition) {
-	file, scanner := shared.ReadFile("day6/input.txt")
-	defer file.Close()
+func getUnique(positions []GuardPosition) []GuardPosition {
+	var uniquePositions []GuardPosition
 
-	var mappedArea [][]rune
-	var guardPosition GuardPosition
-	y := 0
-	for scanner.Scan() {
-		line := scanner.Text()
-		runes := []rune(line)
-		mappedArea = append(mappedArea, runes)
-		for x, r := range runes {
-			if r == '^' {
-				guardPosition = GuardPosition{Position: Position{X: x, Y: y}, Direction: Up}
-			}
+	for _, p := range positions {
+		if isUnique(uniquePositions, p) {
+			uniquePositions = append(uniquePositions, p)
 		}
-		y++
 	}
 
-	// Remove the guard position from the map
-	mappedArea[guardPosition.Y][guardPosition.X] = '.'
+	return uniquePositions
+}
 
-	return mappedArea, guardPosition
+func isUnique(uniquePositions []GuardPosition, p GuardPosition) bool {
+	isUnique := true
+	for _, u := range uniquePositions {
+		if p.X == u.X && p.Y == u.Y {
+			isUnique = false
+			break
+		}
+	}
+
+	return isUnique
 }
