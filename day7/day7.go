@@ -16,6 +16,7 @@ func Run() {
 	equations := readEquationsFromFile()
 
 	part1(equations)
+	part2(equations)
 }
 
 func readEquationsFromFile() []Equation {
@@ -38,7 +39,7 @@ func readEquationsFromFile() []Equation {
 }
 
 func part1(equations []Equation) {
-	validEquations := getValidEquations(equations)
+	validEquations := getValidEquations(equations, false)
 	sum := 0
 	for _, equation := range validEquations {
 		sum += equation.TestValue
@@ -46,19 +47,28 @@ func part1(equations []Equation) {
 	fmt.Println("Total calibration result of valid equations:", sum)
 }
 
-func getValidEquations(equations []Equation) []Equation {
+func part2(equations []Equation) {
+	validEquations := getValidEquations(equations, true)
+	sum := 0
+	for _, equation := range validEquations {
+		sum += equation.TestValue
+	}
+	fmt.Println("Total calibration result w/ concatenation of valid equations:", sum)
+}
+
+func getValidEquations(equations []Equation, useConcatenation bool) []Equation {
 	var validEquations []Equation
 	for _, equation := range equations {
-		if isEquationValid(equation) {
+		if isEquationValid(equation, useConcatenation) {
 			validEquations = append(validEquations, equation)
 		}
 	}
 	return validEquations
 }
 
-func isEquationValid(equation Equation) bool {
+func isEquationValid(equation Equation, useConcatenation bool) bool {
 	allSums := []int{}
-	computeSums(equation.Numbers, 1, equation.Numbers[0], &allSums)
+	computeSums(equation.Numbers, 1, equation.Numbers[0], &allSums, useConcatenation)
 
 	for _, sum := range allSums {
 		if equation.TestValue == sum {
@@ -68,12 +78,20 @@ func isEquationValid(equation Equation) bool {
 	return false
 }
 
-func computeSums(numbers []int, index int, currentSum int, results *[]int) {
+func computeSums(numbers []int, index int, currentSum int, results *[]int, useConcatenation bool) {
 	if index == len(numbers) {
 		*results = append(*results, currentSum)
 		return
 	}
 
-	computeSums(numbers, index+1, currentSum+numbers[index], results)
-	computeSums(numbers, index+1, currentSum*numbers[index], results)
+	computeSums(numbers, index+1, currentSum+numbers[index], results, useConcatenation)
+	computeSums(numbers, index+1, currentSum*numbers[index], results, useConcatenation)
+	if useConcatenation {
+		computeSums(numbers, index+1, concatenateNumbers(currentSum, numbers[index]), results, useConcatenation)
+	}
+}
+
+func concatenateNumbers(a, b int) int {
+	concatenated := shared.ConvertToString(a) + shared.ConvertToString(b)
+	return shared.ConvertToNumber(concatenated)
 }

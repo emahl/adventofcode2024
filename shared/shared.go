@@ -26,3 +26,7 @@ func ConvertToNumber(numberStr string) int {
 
 	return convertedNumber
 }
+
+func ConvertToString(number int) string {
+	return strconv.Itoa(number)
+}
