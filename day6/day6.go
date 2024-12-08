@@ -13,13 +13,8 @@ const (
 	Left
 )
 
-type Position struct {
-	X int
-	Y int
-}
-
 type GuardPosition struct {
-	Position
+	shared.Position
 	Direction int
 }
 
@@ -43,7 +38,7 @@ func readMapFromFile() ([][]rune, GuardPosition) {
 		mappedArea = append(mappedArea, runes)
 		for x, r := range runes {
 			if r == '^' {
-				guardPosition = GuardPosition{Position: Position{X: x, Y: y}, Direction: Up}
+				guardPosition = GuardPosition{Position: shared.Position{X: x, Y: y}, Direction: Up}
 			}
 		}
 		y++
@@ -56,8 +51,14 @@ func readMapFromFile() ([][]rune, GuardPosition) {
 }
 
 func part1(mappedArea [][]rune, guardStartingPosition GuardPosition) {
-	visitedPositions := getVisitedPositions(mappedArea, guardStartingPosition)
-	sum := len(getUnique(visitedPositions))
+	visitedGuardPositions := getVisitedPositions(mappedArea, guardStartingPosition)
+
+	visitedPositions := []shared.Position{}
+	for _, gp := range visitedGuardPositions {
+		visitedPositions = append(visitedPositions, gp.Position)
+	}
+
+	sum := len(shared.GetUnique(visitedPositions))
 	fmt.Println("Number of distinct guard positions:", sum)
 }
 
@@ -95,8 +96,8 @@ func getVisitedPositions(mappedArea [][]rune, guardStartingPosition GuardPositio
 	return result
 }
 
-func getObstructionsCreatingLoops(mappedArea [][]rune, guardStartingPosition GuardPosition) []Position {
-	var obstructionPositions []Position
+func getObstructionsCreatingLoops(mappedArea [][]rune, guardStartingPosition GuardPosition) []shared.Position {
+	var obstructionPositions []shared.Position
 
 	for y := 0; y < len(mappedArea); y++ {
 		for x := 0; x < len(mappedArea[y]); x++ {
@@ -114,7 +115,7 @@ func getObstructionsCreatingLoops(mappedArea [][]rune, guardStartingPosition Gua
 			// Add new obstruction
 			areaCopy[y][x] = '#'
 			if len(getVisitedPositions(areaCopy, guardStartingPosition)) == 0 {
-				obstructionPositions = append(obstructionPositions, Position{X: x, Y: y})
+				obstructionPositions = append(obstructionPositions, shared.Position{X: x, Y: y})
 			}
 		}
 	}
@@ -151,7 +152,7 @@ func moveGuard(area [][]rune, currentGuardPosition GuardPosition) GuardPosition 
 		}
 	}
 
-	return GuardPosition{Position: Position{X: nextX, Y: nextY}, Direction: currentGuardPosition.Direction}
+	return GuardPosition{Position: shared.Position{X: nextX, Y: nextY}, Direction: currentGuardPosition.Direction}
 }
 
 func getNextPosition(position GuardPosition) (int, int) {
@@ -170,28 +171,4 @@ func getNextPosition(position GuardPosition) (int, int) {
 	}
 
 	return nextX, nextY
-}
-
-func getUnique(positions []GuardPosition) []GuardPosition {
-	var uniquePositions []GuardPosition
-
-	for _, p := range positions {
-		if isUnique(uniquePositions, p) {
-			uniquePositions = append(uniquePositions, p)
-		}
-	}
-
-	return uniquePositions
-}
-
-func isUnique(uniquePositions []GuardPosition, p GuardPosition) bool {
-	isUnique := true
-	for _, u := range uniquePositions {
-		if p.X == u.X && p.Y == u.Y {
-			isUnique = false
-			break
-		}
-	}
-
-	return isUnique
 }

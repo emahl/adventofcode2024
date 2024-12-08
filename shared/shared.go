@@ -30,3 +30,24 @@ func ConvertToNumber(numberStr string) int {
 func ConvertToString(number int) string {
 	return strconv.Itoa(number)
 }
+
+func GetUnique(positions []Position) []Position {
+	var uniquePositions []Position
+
+	for _, p := range positions {
+		if isUnique(uniquePositions, p) {
+			uniquePositions = append(uniquePositions, p)
+		}
+	}
+
+	return uniquePositions
+}
+
+func isUnique(uniquePositions []Position, p Position) bool {
+	for _, u := range uniquePositions {
+		if p.X == u.X && p.Y == u.Y {
+			return false
+		}
+	}
+	return true
+}
