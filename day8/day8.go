@@ -8,7 +8,11 @@ import (
 
 func Run() {
 	antennaMap := readAntennaMapFromFile()
-	part1(antennaMap)
+	antennaPositions := getAllAntennaPositions(antennaMap)
+	maxY, maxX := len(antennaMap)-1, len(antennaMap[0])-1
+
+	part1(antennaPositions, maxY, maxX)
+	part2(antennaPositions, maxY, maxX)
 }
 
 func readAntennaMapFromFile() [][]rune {
@@ -22,11 +26,14 @@ func readAntennaMapFromFile() [][]rune {
 	return letterMatrix
 }
 
-func part1(antennaMap [][]rune) {
-	antennaPositions := getAllAntennaPositions(antennaMap)
-	maxY, maxX := len(antennaMap)-1, len(antennaMap[0])-1
-	antinodes := getAntinodes(antennaPositions, maxY, maxX)
+func part1(antennaPositions map[rune][]shared.Position, maxY, maxX int) {
+	antinodes := getAntinodes(antennaPositions, maxY, maxX, false)
 	fmt.Println("Number of antinodes:", len(shared.GetUnique(antinodes)))
+}
+
+func part2(antennaPositions map[rune][]shared.Position, maxY, maxX int) {
+	antinodes := getAntinodes(antennaPositions, maxY, maxX, true)
+	fmt.Println("Number of antinodes with resonant harmonics:", len(shared.GetUnique(antinodes)))
 }
 
 func getAllAntennaPositions(antennaMap [][]rune) map[rune][]shared.Position {
@@ -42,27 +49,37 @@ func getAllAntennaPositions(antennaMap [][]rune) map[rune][]shared.Position {
 	return antennaIndices
 }
 
-func getAntinodes(antennaPositions map[rune][]shared.Position, maxY, maxX int) []shared.Position {
+func getAntinodes(antennaPositions map[rune][]shared.Position, maxY, maxX int, includeResonantHarmonics bool) []shared.Position {
 	var antinodes []shared.Position
 	for r := range antennaPositions {
 		for _, p := range antennaPositions[r] {
 			for _, p2 := range antennaPositions[r] {
 				if p.X != p2.X && p.Y != p2.Y {
-					antinodes = append(antinodes, shared.Position{X: p.X + (p.X - p2.X), Y: p.Y - (p2.Y - p.Y)})
+					counter := 1
+					for {
+						position := shared.Position{X: p.X - ((p2.X - p.X) * counter), Y: p.Y - ((p2.Y - p.Y) * counter)}
+						if !isValidPosition(position, maxY, maxX) {
+							break
+						}
+						antinodes = append(antinodes, position)
+						if !includeResonantHarmonics {
+							break // Stop after one iteration if we are not counting resonant harmonics
+						}
+						counter++
+					}
+
+					// Add the original position if resonant harmonics are included
+					if includeResonantHarmonics {
+						antinodes = append(antinodes, p)
+					}
 				}
 			}
 		}
 	}
 
-	return filterValidPositions(antinodes, maxY, maxX)
+	return antinodes
 }
 
-func filterValidPositions(positions []shared.Position, maxY, maxX int) []shared.Position {
-	var valid []shared.Position
-	for _, p := range positions {
-		if p.X >= 0 && p.Y >= 0 && p.X <= maxX && p.Y <= maxY {
-			valid = append(valid, p)
-		}
-	}
-	return valid
+func isValidPosition(p shared.Position, maxY, maxX int) bool {
+	return p.X >= 0 && p.Y >= 0 && p.X <= maxX && p.Y <= maxY
 }
